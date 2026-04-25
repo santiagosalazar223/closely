@@ -1,18 +1,18 @@
-import { prisma } from "@/lib/prisma";
+"use client";
+
+import { useBusinesses } from "@/lib/hooks/useBusinesses";
 import DiscoverFeedClient from "@/components/DiscoverFeedClient";
 
-export const dynamic = "force-dynamic";
+export default function DiscoverPage() {
+  const { businesses, loading } = useBusinesses({ status: "active" });
 
-export default async function DiscoverPage() {
-  const businesses = await prisma.business.findMany({
-    include: {
-      seller: true,
-      images: true,
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return <DiscoverFeedClient businesses={businesses} />;
 }
