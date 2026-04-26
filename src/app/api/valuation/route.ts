@@ -283,8 +283,8 @@ export async function POST(request: Request) {
         max_tokens: 8096,
         system: SYSTEM_PROMPT,
         messages: [message],
-      },
-      isPdf ? { headers: { "anthropic-beta": "pdfs-2024-09-25" } } : undefined
+        ...(isPdf && { betas: ["pdfs-2024-09-25"] } as Record<string, unknown>),
+      }
     );
 
     const rawText = response.content
@@ -304,26 +304,16 @@ export async function POST(request: Request) {
     const valuation = JSON.parse(jsonMatch[0]);
     return NextResponse.json({ success: true, valuation });
   } catch (err: unknown) {
-    const apiErr = err as { status?: number; message?: string; error?: { message?: string } };
-    const status = apiErr?.status;
-    const detail = apiErr?.error?.message ?? (err instanceof Error ? err.message : "Error desconocido");
-    console.error("[valuation] Claude error", status, detail);
+    // Cast to access Anthropic SDK error fields
+    const e = err as { status?: number; message?: string; error?: { message?: string; type?: string } };
+    const httpStatus = e?.status ?? 0;
+    const rawMsg = e?.error?.message ?? e?.message ?? String(err);
+    console.error("[valuation] error", httpStatus, rawMsg);
 
-    if (status === 401) {
-      return NextResponse.json({ error: "API key inválida. Contacta al administrador." }, { status: 503 });
-    }
-    if (status === 400) {
-      return NextResponse.json(
-        { error: `Formato no compatible con el modelo: ${detail}` },
-        { status: 422 }
-      );
-    }
-    if (status === 429) {
-      return NextResponse.json({ error: "Límite de la API alcanzado. Intenta en unos minutos." }, { status: 429 });
-    }
+    // Always return the raw error so the client can display it for debugging
     return NextResponse.json(
-      { error: `Error al procesar la valoración: ${detail}` },
-      { status: 500 }
+      { error: `[${httpStatus || "ERR"}] ${rawMsg}` },
+      { status: httpStatus >= 400 ? httpStatus : 500 }
     );
   }
 }
