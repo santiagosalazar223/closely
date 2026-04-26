@@ -275,12 +275,17 @@ export async function POST(request: Request) {
     const client = new Anthropic({ apiKey });
     const message = await buildMessageContent(file, businessName, sector, extraContext);
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages: [message],
-    });
+    // PDF document blocks require the pdfs beta header; images/text work without it
+    const isPdf = file.type === "application/pdf";
+    const response = await client.messages.create(
+      {
+        model: "claude-sonnet-4-6",
+        max_tokens: 8096,
+        system: SYSTEM_PROMPT,
+        messages: [message],
+      },
+      isPdf ? { headers: { "anthropic-beta": "pdfs-2024-09-25" } } : undefined
+    );
 
     const rawText = response.content
       .filter((b) => b.type === "text")
@@ -299,10 +304,25 @@ export async function POST(request: Request) {
     const valuation = JSON.parse(jsonMatch[0]);
     return NextResponse.json({ success: true, valuation });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    console.error("[valuation] Error calling Claude:", message);
+    const apiErr = err as { status?: number; message?: string; error?: { message?: string } };
+    const status = apiErr?.status;
+    const detail = apiErr?.error?.message ?? (err instanceof Error ? err.message : "Error desconocido");
+    console.error("[valuation] Claude error", status, detail);
+
+    if (status === 401) {
+      return NextResponse.json({ error: "API key inválida. Contacta al administrador." }, { status: 503 });
+    }
+    if (status === 400) {
+      return NextResponse.json(
+        { error: `Formato no compatible con el modelo: ${detail}` },
+        { status: 422 }
+      );
+    }
+    if (status === 429) {
+      return NextResponse.json({ error: "Límite de la API alcanzado. Intenta en unos minutos." }, { status: 429 });
+    }
     return NextResponse.json(
-      { error: "Error al procesar la valoración. Verifica el archivo e intenta de nuevo." },
+      { error: `Error al procesar la valoración: ${detail}` },
       { status: 500 }
     );
   }
