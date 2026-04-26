@@ -62,8 +62,21 @@ export function useBusinesses(filters: BusinessFilters = {}) {
     setLoading(true);
     setError(null);
 
+    // Fallback to mock if Supabase not configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("TU_PROJECT")) {
+      setBusinesses(applyFiltersToMock(mockBusinesses, filters));
+      setLoading(false);
+      return;
+    }
+
     try {
       const supabase = getSupabase();
+
+      // Timeout after 6 seconds → fall back to mock data
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), 6000)
+      );
+
       let query = supabase
         .from("businesses")
         .select(`
@@ -95,7 +108,7 @@ export function useBusinesses(filters: BusinessFilters = {}) {
         default: query = query.order("featured", { ascending: false }).order("created_at", { ascending: false }); break;
       }
 
-      const { data, error: supabaseError } = await query;
+      const { data, error: supabaseError } = await Promise.race([query, timeoutPromise]);
 
       if (supabaseError) throw supabaseError;
 
