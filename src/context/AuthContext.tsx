@@ -39,12 +39,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
+    // Safety timeout — never hang forever
+    const timeout = setTimeout(() => setIsLoading(false), 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setIsLoading(false));
+        fetchProfile(session.user.id).finally(() => {
+          clearTimeout(timeout);
+          setIsLoading(false);
+        });
       } else {
+        clearTimeout(timeout);
         setIsLoading(false);
       }
     });
@@ -58,10 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
         }
+        setIsLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [fetchProfile, supabase]);
 
   const login = useCallback(async (email: string, password: string) => {
