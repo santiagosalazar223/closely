@@ -9,8 +9,9 @@ import { CATEGORIES } from "@/data/mockData";
 import {
   FiImage, FiDollarSign, FiMapPin, FiFileText, FiTag,
   FiUsers, FiTrendingUp, FiCalendar, FiCheck, FiArrowLeft, FiArrowRight,
-  FiUpload, FiPercent, FiX, FiAlertCircle,
+  FiUpload, FiPercent, FiX, FiAlertCircle, FiZap,
 } from "react-icons/fi";
+import ValuationModal from "@/components/ValuationModal";
 
 const COUNTRIES = [
   "Colombia", "México", "Argentina", "Chile", "Perú", "Ecuador",
@@ -23,6 +24,7 @@ export default function CreateListingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showValuation, setShowValuation] = useState(false);
 
   // Step 1: Basic info
   const [title, setTitle] = useState("");
@@ -261,6 +263,23 @@ export default function CreateListingPage() {
                   <p className="text-amber-600 mt-0.5">Todos los montos en USD. Solo visible para compradores verificados.</p>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setShowValuation(true)}
+                className="w-full flex items-center justify-between gap-3 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl p-4 hover:from-violet-100 hover:to-indigo-100 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-violet-700 transition-colors">
+                    <FiZap size={18} className="text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-violet-900">Valoración IA con estados financieros</p>
+                    <p className="text-xs text-violet-600 mt-0.5">Sube tu EEFF y Claude calculará el precio justo con DCF + múltiplos</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-violet-600 bg-violet-100 px-2.5 py-1 rounded-full whitespace-nowrap">Usar IA</span>
+              </button>
 
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
@@ -586,6 +605,18 @@ export default function CreateListingPage() {
       </div>
 
       <div className="h-24 md:hidden" />
+
+      {showValuation && (
+        <ValuationModal
+          businessName={title || "Mi negocio"}
+          sector={category || "No especificado"}
+          onClose={() => setShowValuation(false)}
+          onApplyValuation={(recommendedUSD) => {
+            setAskingPrice(String(Math.round(recommendedUSD)));
+            setShowValuation(false);
+          }}
+        />
+      )}
     </div>
   );
 }
