@@ -328,7 +328,13 @@ export async function POST(request: Request) {
   }
 }
 
-// Only POST allowed
+// Diagnostic endpoint — lets us confirm which code version is live and if the key is present
 export async function GET() {
-  return NextResponse.json({ error: "Método no permitido." }, { status: 405 });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  return NextResponse.json({
+    version: "v3-sonnet-3-5",
+    model: "claude-3-5-sonnet-20241022",
+    hasApiKey: !!apiKey,
+    keyHint: apiKey ? `${apiKey.slice(0, 14)}...` : null,
+  });
 }
