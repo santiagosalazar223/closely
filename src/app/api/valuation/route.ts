@@ -275,17 +275,12 @@ export async function POST(request: Request) {
     const client = new Anthropic({ apiKey });
     const message = await buildMessageContent(file, businessName, sector, extraContext);
 
-    // PDF document blocks require the pdfs beta header; images/text work without it
-    const isPdf = file.type === "application/pdf";
-    const response = await client.messages.create(
-      {
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 8096,
-        system: SYSTEM_PROMPT,
-        messages: [message],
-        ...(isPdf && { betas: ["pdfs-2024-09-25"] } as Record<string, unknown>),
-      }
-    );
+    const response = await client.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 8096,
+      system: SYSTEM_PROMPT,
+      messages: [message],
+    });
 
     const rawText = response.content
       .filter((b) => b.type === "text")
