@@ -276,7 +276,7 @@ export async function POST(request: Request) {
     const message = await buildMessageContent(file, businessName, sector, extraContext);
 
     const response = await client.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+      model: "claude-sonnet-4-6",
       max_tokens: 8096,
       system: SYSTEM_PROMPT,
       messages: [message],
@@ -317,8 +317,8 @@ export async function POST(request: Request) {
 export async function GET() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   return NextResponse.json({
-    version: "v3-sonnet-3-5",
-    model: "claude-3-5-sonnet-20241022",
+    version: "v4-sonnet-4-6",
+    model: "claude-sonnet-4-6",
     hasApiKey: !!apiKey,
     keyHint: apiKey ? `${apiKey.slice(0, 14)}...` : null,
   });
