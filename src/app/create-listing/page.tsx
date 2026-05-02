@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +12,7 @@ import {
   FiUpload, FiPercent, FiX, FiAlertCircle, FiZap,
 } from "react-icons/fi";
 import ValuationModal from "@/components/ValuationModal";
+import { getSupabase } from "@/lib/supabase";
 
 const COUNTRIES = [
   "Colombia", "México", "Argentina", "Chile", "Perú", "Ecuador",
@@ -49,6 +50,9 @@ export default function CreateListingPage() {
   const [tags, setTags] = useState("");
   const [imageUrls, setImageUrls] = useState<{ url: string; alt: string }[]>([]);
   const [imageInputUrl, setImageInputUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalSteps = 4;
 
@@ -72,6 +76,39 @@ export default function CreateListingPage() {
     if (imageInputUrl.trim() && imageUrls.length < 4) {
       setImageUrls(prev => [...prev, { url: imageInputUrl.trim(), alt: title || "Imagen del negocio" }]);
       setImageInputUrl("");
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || imageUrls.length >= 4) return;
+
+    const ALLOWED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!ALLOWED.includes(file.type)) {
+      setUploadError("Solo se permiten imágenes JPG, PNG o WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("La imagen no puede superar 5 MB.");
+      return;
+    }
+
+    setUploadError("");
+    setUploadingImage(true);
+    try {
+      const supabase = getSupabase();
+      const ext = file.name.split(".").pop();
+      const path = `businesses/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("business-images").upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("business-images").getPublicUrl(path);
+      setImageUrls(prev => [...prev, { url: data.publicUrl, alt: title || "Imagen del negocio" }]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setUploadError(`Error al subir: ${msg}`);
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -384,14 +421,14 @@ export default function CreateListingPage() {
           {/* STEP 3: Highlights + Images */}
           {step === 3 && (
             <div className="space-y-8">
-              {/* Image URLs */}
+              {/* Images */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Imágenes del negocio
                   <span className="text-gray-400 font-normal ml-2">(hasta 4 fotos)</span>
                 </label>
                 <p className="text-xs text-gray-400 mb-4">
-                  Agrega URLs de imágenes (Unsplash, tu web, etc.). La primera será la portada.
+                  Sube fotos desde tu dispositivo o pega una URL. La primera será la portada.
                 </p>
 
                 {imageUrls.length > 0 && (
@@ -421,24 +458,65 @@ export default function CreateListingPage() {
                 )}
 
                 {imageUrls.length < 4 && (
-                  <div className="flex gap-2">
+                  <div className="space-y-3">
+                    {/* Upload from device */}
                     <input
-                      type="url"
-                      value={imageInputUrl}
-                      onChange={e => setImageInputUrl(e.target.value)}
-                      placeholder="https://imagen-de-tu-negocio.com/foto.jpg"
-                      className="input-field flex-1"
-                      onKeyDown={e => e.key === "Enter" && addImageUrl()}
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleFileUpload}
                     />
                     <button
                       type="button"
-                      onClick={addImageUrl}
-                      disabled={!imageInputUrl.trim()}
-                      className="btn-primary disabled:opacity-40"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="w-full flex items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-2xl py-6 text-gray-500 hover:border-brand-400 hover:text-brand-600 hover:bg-brand-50 transition-all disabled:opacity-50"
                     >
-                      Agregar
+                      {uploadingImage ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-brand-300 border-t-brand-600 rounded-full animate-spin" />
+                          Subiendo...
+                        </>
+                      ) : (
+                        <>
+                          <FiUpload size={20} />
+                          Subir foto desde tu dispositivo
+                        </>
+                      )}
                     </button>
+
+                    {/* URL input */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-xs text-gray-400">o pega una URL</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={imageInputUrl}
+                        onChange={e => setImageInputUrl(e.target.value)}
+                        placeholder="https://imagen-de-tu-negocio.com/foto.jpg"
+                        className="input-field flex-1"
+                        onKeyDown={e => e.key === "Enter" && addImageUrl()}
+                      />
+                      <button
+                        type="button"
+                        onClick={addImageUrl}
+                        disabled={!imageInputUrl.trim()}
+                        className="btn-primary disabled:opacity-40"
+                      >
+                        Agregar
+                      </button>
+                    </div>
                   </div>
+                )}
+
+                {uploadError && (
+                  <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                    <FiAlertCircle size={12} /> {uploadError}
+                  </p>
                 )}
                 <p className="text-xs text-gray-400 mt-2">
                   Tip: Si no tienes fotos ahora, puedes agregarlas después. Usaremos una imagen de muestra.
