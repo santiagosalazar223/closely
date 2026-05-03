@@ -6,6 +6,7 @@ import {
   FiTrendingUp, FiDollarSign, FiBarChart2, FiInfo, FiDownload,
   FiChevronDown, FiChevronUp, FiLoader,
 } from "react-icons/fi";
+import { track } from "@/lib/analytics";
 
 interface ValuationResult {
   resumen_ejecutivo: string;
@@ -133,6 +134,12 @@ export default function ValuationModal({ businessName, sector, onClose, onApplyV
     setStep(1);
     setError("");
 
+    track("valuation_started", {
+      file_type: file.type,
+      file_size_kb: Math.round(file.size / 1024),
+      sector,
+    });
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("businessName", businessName);
@@ -144,14 +151,23 @@ export default function ValuationModal({ businessName, sector, onClose, onApplyV
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "Error al procesar la valoración.");
+        const errMsg = json.error ?? "No pudimos procesar la valoración.";
+        track("valuation_failed", { reason: errMsg.slice(0, 200), status: res.status });
+        setError(errMsg);
         setStep(0);
         return;
       }
 
+      track("valuation_completed", {
+        recommended_usd: json.valuation?.valoracion_final?.valor_recomendado_usd ?? 0,
+        ciiu: json.valuation?.codigo_ciiu ?? "",
+        confidence: json.valuation?.nivel_confianza ?? "",
+      });
       setResult(json.valuation);
       setStep(2);
-    } catch {
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : "network";
+      track("valuation_failed", { reason });
       setError("Error de conexión. Verifica tu internet e intenta de nuevo.");
       setStep(0);
     }

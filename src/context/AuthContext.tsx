@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
+import { track, resetAnalyticsUser } from "@/lib/analytics";
 import type { Database } from "@/lib/database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) track("login_completed", {});
     return { error: error?.message ?? null };
   }, [supabase]);
 
@@ -86,17 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string,
     role: "buyer" | "seller"
   ) => {
+    track("register_started", { role });
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name, role } },
     });
+    if (!error) track("register_completed", { role });
     return { error: error?.message ?? null };
   }, [supabase]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    resetAnalyticsUser();
   }, [supabase]);
 
   const updateProfile = useCallback(async (data: Partial<Profile>) => {

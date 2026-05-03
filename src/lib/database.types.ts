@@ -358,6 +358,108 @@ export type Database = {
         };
         Relationships: [];
       };
+      events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          name: string;
+          properties: Json;
+          path: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          name: string;
+          properties?: Json;
+          path?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          name?: string;
+          properties?: Json;
+          path?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      feedback: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          rating: number | null;
+          category: string | null;
+          message: string;
+          page: string | null;
+          email: string | null;
+          resolved: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          rating?: number | null;
+          category?: string | null;
+          message: string;
+          page?: string | null;
+          email?: string | null;
+          resolved?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          rating?: number | null;
+          category?: string | null;
+          message?: string;
+          page?: string | null;
+          email?: string | null;
+          resolved?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan: "free" | "pro" | "enterprise";
+          role: "buyer" | "seller";
+          status: "active" | "cancelled" | "past_due" | "trialing";
+          current_period_end: string | null;
+          trial_ends_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan: "free" | "pro" | "enterprise";
+          role: "buyer" | "seller";
+          status?: "active" | "cancelled" | "past_due" | "trialing";
+          current_period_end?: string | null;
+          trial_ends_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          plan?: "free" | "pro" | "enterprise";
+          role?: "buyer" | "seller";
+          status?: "active" | "cancelled" | "past_due" | "trialing";
+          current_period_end?: string | null;
+          trial_ends_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

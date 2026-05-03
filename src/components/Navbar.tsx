@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   FiHome, FiCompass, FiMessageSquare, FiUser, FiPlusCircle,
-  FiGrid, FiBell, FiLogOut, FiX,
+  FiGrid, FiBell, FiLogOut, FiX, FiZap,
 } from "react-icons/fi";
 
 export default function Navbar() {
@@ -144,6 +144,10 @@ export default function Navbar() {
                   <Link href="/dashboard" onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                     <FiGrid size={15} /> Dashboard
+                  </Link>
+                  <Link href="/pricing" onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-brand-600 hover:bg-brand-50 transition-colors font-medium">
+                    <FiZap size={15} /> Mejorar plan
                   </Link>
                   <button
                     onClick={handleLogout}

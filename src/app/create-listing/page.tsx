@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import ValuationModal from "@/components/ValuationModal";
 import { getSupabase } from "@/lib/supabase";
+import { track } from "@/lib/analytics";
 
 const COUNTRIES = [
   "Colombia", "México", "Argentina", "Chile", "Perú", "Ecuador",
@@ -149,6 +150,13 @@ export default function CreateListingPage() {
     if (createError) {
       setError(createError);
     } else {
+      track("listing_created", {
+        category,
+        country,
+        asking_price_usd: Number(askingPrice) || 0,
+        annual_revenue_usd: Number(annualRevenue) || 0,
+        percentage: percentageForSale,
+      });
       router.push(business ? `/business/${business.id}` : "/dashboard");
     }
   };
@@ -690,6 +698,7 @@ export default function CreateListingPage() {
           sector={category || "No especificado"}
           onClose={() => setShowValuation(false)}
           onApplyValuation={(recommendedUSD) => {
+            track("valuation_applied", { recommended_usd: Math.round(recommendedUSD) });
             setAskingPrice(String(Math.round(recommendedUSD)));
             setShowValuation(false);
           }}

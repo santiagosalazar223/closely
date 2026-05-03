@@ -275,16 +275,27 @@ export async function POST(request: Request) {
     const client = new Anthropic({ apiKey });
     const message = await buildMessageContent(file, businessName, sector, extraContext);
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+    const isPdf = file.type === "application/pdf";
+
+    // For PDFs we use client.beta.messages.create with the pdfs beta enabled.
+    // For images/text we use the standard endpoint. Both call the same model.
+    const params = {
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 8096,
       system: SYSTEM_PROMPT,
       messages: [message],
-    });
+    };
 
-    const rawText = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as Anthropic.TextBlock).text)
+    const response = isPdf
+      ? await client.beta.messages.create({
+          ...params,
+          betas: ["pdfs-2024-09-25"],
+        })
+      : await client.messages.create(params);
+
+    const rawText = (response.content as Array<{ type: string; text?: string }>)
+      .filter((b) => b.type === "text" && typeof b.text === "string")
+      .map((b) => b.text as string)
       .join("");
 
     // Extract JSON (handle markdown fences if any)

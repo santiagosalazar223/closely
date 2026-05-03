@@ -5,17 +5,24 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES } from "@/data/mockData";
-import { FiArrowRight, FiCheck, FiShield, FiZap, FiTarget, FiTrendingUp, FiUsers } from "react-icons/fi";
+import { track, trackPageView } from "@/lib/analytics";
+import {
+  FiArrowRight, FiCheck, FiShield, FiZap, FiTarget, FiTrendingUp,
+  FiUsers, FiCpu, FiBarChart2, FiClock, FiAlertTriangle,
+} from "react-icons/fi";
 
 export default function LandingPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    trackPageView("/");
     if (!isLoading && isAuthenticated) router.push("/feed");
   }, [isAuthenticated, isLoading, router]);
 
   const [activeTab, setActiveTab] = useState<"buyer" | "seller">("buyer");
+
+  const handleCta = (id: string) => track("cta_clicked", { cta: id, page: "landing" });
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -40,11 +47,18 @@ export default function LandingPage() {
             </div>
             <span className="text-2xl font-bold text-white">BizSwipe</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-white/80 hover:text-white font-medium transition-colors">
+          <div className="flex items-center gap-2 md:gap-5">
+            <Link href="/pricing" className="hidden md:inline text-white/80 hover:text-white font-medium transition-colors text-sm">
+              Precios
+            </Link>
+            <Link href="/login" className="text-white/80 hover:text-white font-medium transition-colors text-sm">
               Iniciar Sesión
             </Link>
-            <Link href="/register" className="btn-accent !py-2.5 !px-5 !text-sm">
+            <Link
+              href="/register"
+              onClick={() => handleCta("nav_register")}
+              className="btn-accent !py-2.5 !px-5 !text-sm"
+            >
               Registrarse
             </Link>
           </div>
@@ -54,33 +68,46 @@ export default function LandingPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-6 backdrop-blur-sm">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-sm text-white/80">+2,400 negocios activos en LATAM</span>
+              <span className="text-sm text-white/80">AI-first M&A marketplace para LATAM</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.05] mb-6">
-              Compra, vende e invierte en{" "}
-              <span className="gradient-text bg-gradient-to-r from-brand-400 to-accent-400">negocios reales</span>
+              Vende tu negocio con{" "}
+              <span className="gradient-text bg-gradient-to-r from-brand-400 to-accent-400">
+                herramientas de banca de inversión
+              </span>
             </h1>
             <p className="text-xl text-white/70 max-w-2xl mb-8 leading-relaxed">
-              La plataforma líder en Latinoamérica para descubrir oportunidades de inversión en pequeños y medianos
-              negocios. Swipea, conecta y cierra deals.
+              Sube tus estados financieros, recibe una valoración profesional con DCF + múltiplos en
+              menos de 2 minutos, y conecta con compradores reales. Sin brokers caros, sin esperas de meses.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/register" className="btn-accent !py-4 !px-8 !text-lg flex items-center justify-center gap-2">
-                Comenzar Gratis <FiArrowRight />
+              <Link
+                href="/register"
+                onClick={() => handleCta("hero_register")}
+                className="btn-accent !py-4 !px-8 !text-lg flex items-center justify-center gap-2"
+              >
+                Empieza gratis <FiArrowRight />
               </Link>
-              <Link href="/feed" className="btn-secondary !py-4 !px-8 !text-lg !bg-white/10 !text-white !border-white/20 hover:!bg-white/20 flex items-center justify-center">
-                Explorar Negocios
+              <Link
+                href="/pricing"
+                onClick={() => handleCta("hero_pricing")}
+                className="btn-secondary !py-4 !px-8 !text-lg !bg-white/10 !text-white !border-white/20 hover:!bg-white/20 flex items-center justify-center"
+              >
+                Ver precios
               </Link>
             </div>
+            <p className="text-xs text-white/50 mt-4">
+              ✓ Sin tarjeta de crédito · ✓ Activación en 60 segundos · ✓ Cancela cuando quieras
+            </p>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20">
             {[
-              { value: "2,400+", label: "Negocios listados" },
-              { value: "$180M+", label: "En transacciones" },
-              { value: "15K+", label: "Inversores activos" },
-              { value: "12", label: "Países" },
+              { value: "<2 min", label: "Valoración con IA" },
+              { value: "3%", label: "Comisión vs 8-12% broker" },
+              { value: "DCF", label: "+ múltiplos + activos" },
+              { value: "12", label: "Países LATAM" },
             ].map((s, i) => (
               <div key={i} className="text-center">
                 <p className="text-3xl md:text-4xl font-black text-white">{s.value}</p>
@@ -90,6 +117,106 @@ export default function LandingPage() {
           </div>
         </div>
       </header>
+
+      {/* Problem section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-red-50 text-red-600 mb-4">
+              <FiAlertTriangle size={12} /> El problema
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 max-w-3xl mx-auto leading-tight">
+              Vender un negocio en LATAM hoy es{" "}
+              <span className="text-red-600">caro, lento y opaco</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: FiClock,
+                stat: "8-14 meses",
+                title: "Tiempo promedio para cerrar",
+                desc: "Brokers tradicionales usan procesos manuales. Mientras tanto, el negocio pierde valor y los compradores se enfrían.",
+              },
+              {
+                icon: FiAlertTriangle,
+                stat: "8-12%",
+                title: "Comisión de un broker",
+                desc: "Para una empresa de $500K USD eso son hasta $60K solo en comisiones. Sin garantía de cierre.",
+              },
+              {
+                icon: FiBarChart2,
+                stat: "60%",
+                title: "Negocios mal valorados",
+                desc: "Sin DCF ni análisis sectorial, los dueños sub o sobre-valoran su negocio y los deals fracasan.",
+              },
+            ].map((p, i) => (
+              <div key={i} className="bg-gray-50 rounded-3xl p-7 border border-gray-100">
+                <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mb-5">
+                  <p.icon size={22} className="text-red-600" />
+                </div>
+                <p className="text-3xl font-black text-gray-900">{p.stat}</p>
+                <h3 className="text-lg font-bold text-gray-900 mt-2">{p.title}</h3>
+                <p className="text-sm text-gray-500 mt-2 leading-relaxed">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-gray-500 mt-12 max-w-2xl mx-auto">
+            <strong className="text-gray-900">El resultado:</strong> 9 de cada 10 dueños de pymes en LATAM
+            que quieren vender, terminan sin hacerlo o aceptando precios muy por debajo del valor real.
+          </p>
+        </div>
+      </section>
+
+      {/* AI-first solution */}
+      <section className="py-20 bg-gradient-to-br from-brand-50 via-white to-accent-50">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-brand-100 text-brand-700 mb-4">
+              <FiCpu size={12} /> Nuestra solución AI-first
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 max-w-3xl mx-auto leading-tight">
+              Una IA entrenada en{" "}
+              <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
+                metodología Damodaran
+              </span>{" "}
+              hace el trabajo de un analyst en segundos
+            </h2>
+            <p className="text-gray-500 mt-4 max-w-2xl mx-auto">
+              Sube tus EEFF (PDF, Excel o CSV). Claude analiza con DCF a 5 años, múltiplos sectoriales
+              EV/EBITDA y EV/Revenue, ajusta por riesgo país LATAM y prima de iliquidez.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-4">
+            {[
+              { step: "1", title: "Sube EEFF", desc: "PDF, Excel, CSV. Hasta 10MB.", icon: "📄" },
+              { step: "2", title: "IA extrae datos", desc: "Revenue, EBITDA, FCL, deuda neta.", icon: "🔍" },
+              { step: "3", title: "3 metodologías", desc: "DCF + múltiplos + activos netos.", icon: "📊" },
+              { step: "4", title: "Recibe valoración", desc: "Rango bajo/medio/alto justificado.", icon: "💎" },
+            ].map((s, i) => (
+              <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                <div className="text-3xl mb-3">{s.icon}</div>
+                <p className="text-xs font-bold text-brand-600 mb-1">PASO {s.step}</p>
+                <h3 className="font-bold text-gray-900">{s.title}</h3>
+                <p className="text-sm text-gray-500 mt-1">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link
+              href="/register"
+              onClick={() => handleCta("ai_section_register")}
+              className="inline-flex items-center gap-2 btn-primary !py-3 !px-7"
+            >
+              Probar la valoración IA <FiArrowRight />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* How it works for both roles */}
       <section className="py-24 bg-white">
@@ -275,15 +402,43 @@ export default function LandingPage() {
               </p>
             </div>
             {[
-              { title: "Plataforma", links: ["Explorar", "Descubrir", "Publicar", "Precios"] },
-              { title: "Empresa", links: ["Sobre Nosotros", "Blog", "Carreras", "Prensa"] },
-              { title: "Legal", links: ["Términos", "Privacidad", "Cookies", "Licencias"] },
+              {
+                title: "Plataforma",
+                links: [
+                  { label: "Explorar", href: "/feed" },
+                  { label: "Precios", href: "/pricing" },
+                  { label: "Iniciar sesión", href: "/login" },
+                  { label: "Registrarse", href: "/register" },
+                ],
+              },
+              {
+                title: "Empresa",
+                links: [
+                  { label: "Sobre Nosotros", href: "#" },
+                  { label: "Blog", href: "#" },
+                  { label: "Contacto", href: "mailto:hola@bizswipe.co" },
+                  { label: "Soporte", href: "mailto:soporte@bizswipe.co" },
+                ],
+              },
+              {
+                title: "Legal",
+                links: [
+                  { label: "Términos", href: "#" },
+                  { label: "Privacidad", href: "#" },
+                  { label: "Cookies", href: "#" },
+                  { label: "Disclaimer IA", href: "#" },
+                ],
+              },
             ].map((col) => (
               <div key={col.title}>
                 <h4 className="text-white font-semibold mb-4">{col.title}</h4>
                 <ul className="space-y-2">
                   {col.links.map((l) => (
-                    <li key={l}><a href="#" className="text-gray-400 text-sm hover:text-white transition-colors">{l}</a></li>
+                    <li key={l.label}>
+                      <Link href={l.href} className="text-gray-400 text-sm hover:text-white transition-colors">
+                        {l.label}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               </div>
