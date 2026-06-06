@@ -30,7 +30,9 @@ export function useConversations(userId: string | undefined) {
         .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
         .order("created_at", { ascending: false });
 
-      if (error || !data || data.length === 0) {
+      // Only fall back to mock when the query actually fails. A real user with
+      // no conversations should see an empty list, not fabricated ones.
+      if (error || !data) {
         setConversations(mockConversations);
         return;
       }

@@ -11,7 +11,7 @@ import Link from "next/link";
 import {
   FiTrendingUp, FiEye, FiHeart, FiMessageSquare, FiDollarSign,
   FiPlusCircle, FiBarChart2, FiArrowUpRight, FiBookmark,
-  FiStar, FiClock, FiEdit, FiTrash2,
+  FiStar, FiClock, FiEdit,
 } from "react-icons/fi";
 
 export default function DashboardPage() {

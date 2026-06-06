@@ -23,7 +23,7 @@ export default function Navbar() {
   const navItems = [
     { href: "/feed", label: "Explorar", icon: FiHome },
     ...(isBuyer
-      ? [{ href: "/feed", label: "Descubrir", icon: FiCompass }]
+      ? [{ href: "/discover", label: "Descubrir", icon: FiCompass }]
       : [{ href: "/create-listing", label: "Publicar", icon: FiPlusCircle }]
     ),
     { href: "/messages", label: "Mensajes", icon: FiMessageSquare },

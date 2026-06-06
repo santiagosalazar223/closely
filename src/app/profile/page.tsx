@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CATEGORIES } from "@/data/mockData";
 import {
   FiUser, FiMapPin, FiEdit3, FiCheckCircle, FiShield,
-  FiDollarSign, FiBriefcase, FiCamera, FiSave, FiLogOut,
+  FiDollarSign, FiBriefcase, FiSave, FiLogOut,
   FiPhone, FiLink, FiArrowRight,
 } from "react-icons/fi";
 
@@ -29,6 +29,22 @@ export default function ProfilePage() {
     investment_range_max: profile?.investment_range_max || 500000,
     interested_categories: profile?.interested_categories || [],
   });
+
+  // Sync the form once the profile finishes loading (useState only captures the
+  // initial — possibly null — profile on first mount).
+  useEffect(() => {
+    if (!profile) return;
+    setForm({
+      name: profile.name || "",
+      bio: profile.bio || "",
+      location: profile.location || "",
+      phone: profile.phone || "",
+      linkedin_url: profile.linkedin_url || "",
+      investment_range_min: profile.investment_range_min || 10000,
+      investment_range_max: profile.investment_range_max || 500000,
+      interested_categories: profile.interested_categories || [],
+    });
+  }, [profile]);
 
   if (!profile) return null;
   const isBuyer = profile.role === "buyer";

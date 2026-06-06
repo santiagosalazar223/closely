@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useBusiness, saveBusiness } from "@/lib/hooks/useBusinesses";
+import { useBusiness, saveBusiness, isBusinessSaved } from "@/lib/hooks/useBusinesses";
 import { getOrCreateConversation, sendDirectMessage } from "@/lib/hooks/useMessages";
 import { formatCurrency, formatFullCurrency } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
@@ -28,6 +28,12 @@ export default function BusinessDetailPage() {
   const [contactMsg, setContactMsg] = useState("");
   const [sendingMsg, setSendingMsg] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
+
+  useEffect(() => {
+    if (profile && business) {
+      isBusinessSaved(business.id, profile.id).then(setSaved);
+    }
+  }, [profile, business]);
 
   const handleSave = async () => {
     if (!profile || !business) return;

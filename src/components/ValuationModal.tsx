@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import {
   FiX, FiUploadCloud, FiFileText, FiCheckCircle, FiAlertTriangle,
   FiTrendingUp, FiDollarSign, FiBarChart2, FiInfo, FiDownload,
-  FiChevronDown, FiChevronUp, FiLoader,
+  FiChevronDown, FiChevronUp,
 } from "react-icons/fi";
 import { track } from "@/lib/analytics";
 
